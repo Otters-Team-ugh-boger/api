@@ -1,5 +1,6 @@
 from decimal import Decimal
 from enum import Enum
+from typing import List
 
 from fastapi import FastAPI
 import pydantic
@@ -50,6 +51,11 @@ class DbPayment(Payment):
     id: int
 
 
-@app.get("/user/login")
+@app.get("/payments")
+def get_payments() -> List[DbPayment]:
+    return [DbPayment(id=1, payment_method_id=1, foundation_id=1, amount=1)]
+
+
+@app.post("/user/login")
 def read_item(user: User):
     return DbUser(id=1, name="boger", password="ugh")
