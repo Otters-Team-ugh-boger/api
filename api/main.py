@@ -42,7 +42,7 @@ def authenticate_user(db, username: str, password: str) -> Optional[models.User]
 
 @app.post("/user/signup")
 def create_user(
-        user: schema.RequestUser, db: Session = Depends(get_db)
+    user: schema.RequestUser, db: Session = Depends(get_db)
 ) -> schema.ResponseUser:
     db_user = crud.create_user(db, user)
     return db_user
@@ -72,17 +72,17 @@ def create_user_token(user: schema.RequestUser) -> str:
 
 @app.get("/payments/methods")
 def get_payment_methods(
-        db: Session = Depends(get_db),
-        user: schema.ResponseUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    user: schema.ResponseUser = Depends(get_current_user),
 ) -> List[schema.ResponsePaymentMethod]:
     return crud.get_payment_methods(db, user.id)
 
 
 @app.post("/payments/methods")
 def create_payment_method(
-        payment_method: schema.RequestPaymentMethod,
-        db: Session = Depends(get_db),
-        user: schema.ResponseUser = Depends(get_current_user),
+    payment_method: schema.RequestPaymentMethod,
+    db: Session = Depends(get_db),
+    user: schema.ResponseUser = Depends(get_current_user),
 ) -> schema.ResponsePaymentMethod:
     return schema.ResponsePaymentMethod.from_orm(
         crud.create_payment_method(db, user.id, payment_method)
@@ -91,9 +91,9 @@ def create_payment_method(
 
 @app.get("/payments/methods/{payment_method_id}")
 def get_payment_method(
-        payment_method_id: int,
-        db: Session = Depends(get_db),
-        user: schema.ResponseUser = Depends(get_current_user),
+    payment_method_id: int,
+    db: Session = Depends(get_db),
+    user: schema.ResponseUser = Depends(get_current_user),
 ) -> schema.ResponsePaymentMethod:
     return schema.ResponsePaymentMethod.from_orm(
         crud.get_payment_method(db, payment_method_id)
@@ -102,30 +102,30 @@ def get_payment_method(
 
 @app.delete("/payments/methods/{payment_method_id}")
 def delete_payment_method(
-        payment_method_id: int,
-        db: Session = Depends(get_db),
-        user: schema.ResponseUser = Depends(get_current_user),
+    payment_method_id: int,
+    db: Session = Depends(get_db),
+    user: schema.ResponseUser = Depends(get_current_user),
 ) -> None:
     crud.delete_payment_method(db, payment_method_id)
 
 
 @app.get("/payments/rules")
 def get_payment_rules(
-        db: Session = Depends(get_db), user: schema.ResponseUser = Depends(get_current_user)
+    db: Session = Depends(get_db), user: schema.ResponseUser = Depends(get_current_user)
 ) -> List[schema.ResponsePaymentRule]:
     return crud.get_payment_rules(db, user.id)
 
 
 @app.post("/payments/rules")
 def create_payment_rule(
-        payment_rule: schema.RequestPaymentRule, db: Session = Depends(get_db)
+    payment_rule: schema.RequestPaymentRule, db: Session = Depends(get_db)
 ) -> schema.ResponsePaymentRule:
     return crud.create_payment_rule(db, payment_rule)
 
 
 @app.get("/payments/rules/{payment_rule_id}")
 def get_payment_rule(
-        payment_rule_id: int, db: Session = Depends(get_db)
+    payment_rule_id: int, db: Session = Depends(get_db)
 ) -> schema.ResponsePaymentRule:
     return crud.get_payment_rule(db, payment_rule_id)
 
@@ -137,14 +137,14 @@ def delete_payment_rule(payment_rule_id: int, db: Session = Depends(get_db)):
 
 @app.post("/payments/rules/{payment_rule_id}/trigger")
 def trigger_payment_rule(
-        payment_rule_id: int, db: Session = Depends(get_db)
+    payment_rule_id: int, db: Session = Depends(get_db)
 ) -> schema.ResponsePaymentRule:
     return crud.create_payment(db, payment_rule_id)
 
 
 @app.get("/payments/history")
 def get_payment_history(
-        db: Session = Depends(get_db),
-        user: schema.ResponseUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    user: schema.ResponseUser = Depends(get_current_user),
 ) -> List[schema.ResponsePayment]:
     return crud.get_payments(db, user.id)

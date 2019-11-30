@@ -24,7 +24,9 @@ def create_user(db: Session, user: schema.RequestUser):
 
 
 def get_user_by_token(db: Session, token: str):
-    db_token = db.query(models.UserToken).filter(models.UserToken.token == token).first()
+    db_token = (
+        db.query(models.UserToken).filter(models.UserToken.token == token).first()
+    )
     return db_token.user
 
 
@@ -42,7 +44,7 @@ def get_payment_methods(db: Session, user_id: int) -> List[models.PaymentMethod]
 
 
 def create_payment_method(
-        db: Session, user_id: int, payment_method: schema.RequestPaymentMethod
+    db: Session, user_id: int, payment_method: schema.RequestPaymentMethod
 ) -> models.PaymentMethod:
     payment_method_rcd = models.PaymentMethod(user_id=user_id, **payment_method.dict())
     db.add(payment_method_rcd)
@@ -54,8 +56,8 @@ def create_payment_method(
 def get_payment_method(db: Session, payment_method_id: int) -> models.PaymentMethod:
     return (
         db.query(models.PaymentMethod)
-            .filter(models.PaymentMethod.id == payment_method_id)
-            .first()
+        .filter(models.PaymentMethod.id == payment_method_id)
+        .first()
     )
 
 
@@ -67,13 +69,13 @@ def delete_payment_method(db: Session, payment_method_id: int) -> bool:
 def get_payment_rules(db: Session, user_id: int) -> List[models.PaymentRule]:
     return (
         db.query(models.PaymentRule)
-            .filter(models.PaymentRule.payment_method.user_id == user_id)
-            .all()
+        .filter(models.PaymentRule.payment_method.user_id == user_id)
+        .all()
     )
 
 
 def create_payment_rule(
-        db: Session, payment_rule: schema.RequestPaymentRule,
+    db: Session, payment_rule: schema.RequestPaymentRule,
 ) -> models.PaymentRule:
     payment_rule_rcd = models.PaymentRule(**payment_rule.dict())
     db.add(payment_rule_rcd)
@@ -85,8 +87,8 @@ def create_payment_rule(
 def get_payment_rule(db: Session, payment_rule_id: int) -> models.PaymentRule:
     return (
         db.query(models.PaymentRule)
-            .filter(models.PaymentRule.id == payment_rule_id)
-            .first()
+        .filter(models.PaymentRule.id == payment_rule_id)
+        .first()
     )
 
 
@@ -106,6 +108,6 @@ def create_payment(db: Session, payment_rule_id: int) -> models.Payment:
 def get_payments(db: Session, user_id: int) -> List[models.Payment]:
     return (
         db.query(models.Payment)
-            .filter(models.Payment.payment_rule.payment_method.user_id == user_id)
-            .all()
+        .filter(models.Payment.payment_rule.payment_method.user_id == user_id)
+        .all()
     )
