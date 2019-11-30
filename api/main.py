@@ -1,11 +1,11 @@
-from typing import List, Union
+from typing import List
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from starlette.status import HTTP_401_UNAUTHORIZED
 
-from api import schemas, models, crud
+from api import crud, models, schemas
 from api.database import SessionLocal, engine
 from api.security import verify_password
 
@@ -23,7 +23,9 @@ def get_db():
         db.close()
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> schemas.ResponseUser:
+async def get_current_user(
+    token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
+) -> schemas.ResponseUser:
     return crud.get_user_by_token(db, token)
 
 
@@ -37,7 +39,9 @@ def authenticate_user(db, username: str, password: str):
 
 
 @app.post("/user/signup")
-def create_user(user: schemas.RequestUser, db: Session = Depends(get_db)) -> schemas.ResponseUser:
+def create_user(
+    user: schemas.RequestUser, db: Session = Depends(get_db)
+) -> schemas.ResponseUser:
     db_user = crud.create_user(db, user)
     return db_user
 
@@ -48,7 +52,7 @@ def create_user_token(user: schemas.RequestUser, db: Session = Depends(get_db)) 
     if not db_user:
         raise HTTPException(
             status_code=HTTP_401_UNAUTHORIZED,
-            detail='Could not validate credentials',
+            detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
     token = crud.create_user_token(db, db_user.id)
@@ -60,7 +64,7 @@ def create_user_token(user: schemas.RequestUser, db: Session = Depends(get_db)) 
 
 @app.get("/payments/methods")
 def get_payment_methods(
-        user: schemas.ResponseUser = Depends(get_current_user),
+    user: schemas.ResponseUser = Depends(get_current_user),
 ) -> List[schemas.ResponsePaymentMethod]:
     return [
         schemas.ResponsePaymentMethod(
@@ -74,7 +78,8 @@ def get_payment_methods(
 
 @app.post("/payments/methods")
 def create_payment_method(
-        payment_method: schemas.RequestPaymentMethod, user: schemas.ResponseUser = Depends(get_current_user)
+    payment_method: schemas.RequestPaymentMethod,
+    user: schemas.ResponseUser = Depends(get_current_user),
 ) -> schemas.ResponsePaymentMethod:
     return schemas.ResponsePaymentMethod(
         id=1,
@@ -86,7 +91,7 @@ def create_payment_method(
 
 @app.get("/payments/methods/{payment_method_id}")
 def get_payment_method(
-        payment_method_id: int, user: schemas.ResponseUser = Depends(get_current_user)
+    payment_method_id: int, user: schemas.ResponseUser = Depends(get_current_user)
 ) -> schemas.ResponsePaymentMethod:
     return schemas.ResponsePaymentMethod(
         id=payment_method_id,
@@ -98,18 +103,24 @@ def get_payment_method(
 
 @app.delete("/payments/methods/{payment_method_id}")
 def delete_payment_method(
-        payment_method_id: int, user: schemas.ResponseUser = Depends(get_current_user)
+    payment_method_id: int, user: schemas.ResponseUser = Depends(get_current_user)
 ) -> None:
     _tmp = payment_method_id, user
 
 
 @app.get("/payments/rules")
 def get_payment_rules() -> List[schemas.ResponsePaymentRule]:
-    return [schemas.ResponsePaymentRule(id=1, payment_method_id=1, foundation_id=1, amount=1)]
+    return [
+        schemas.ResponsePaymentRule(
+            id=1, payment_method_id=1, foundation_id=1, amount=1
+        )
+    ]
 
 
 @app.post("/payments/rules")
-def create_payment_rule(payment_rule: schemas.RequestPaymentRule) -> schemas.ResponsePaymentRule:
+def create_payment_rule(
+    payment_rule: schemas.RequestPaymentRule
+) -> schemas.ResponsePaymentRule:
     return schemas.ResponsePaymentRule(id=1, **payment_rule.dict())
 
 

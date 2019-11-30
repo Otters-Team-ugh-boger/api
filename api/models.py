@@ -36,6 +36,7 @@ class PaymentMethod(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
 
     user = relationship("User", back_populates="payment_methods")
+    payment_rules = relationship("PaymentRule", back_populates="payment_method")
 
 
 class Foundation(Base):
@@ -59,7 +60,7 @@ class PaymentRule(Base):
 
     payment_method = relationship("PaymentMethod", back_populates="payment_rules")
     foundation = relationship("Foundation", back_populates="payment_rules")
-    payment_history = relationship("Payment", back_populates="payment_rule")
+    payment_history = relationship("PaymentHistory", back_populates="payment_rule")
 
 
 class PaymentHistory(Base):
