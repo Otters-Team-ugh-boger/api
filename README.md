@@ -10,4 +10,4 @@
 
 ### How to apply migrations
 
-`alembic upgrade`
+`alembic upgrade head`
