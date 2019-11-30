@@ -41,19 +41,37 @@ class DbFoundation(Foundation):
     id: int
 
 
-class Payment(pydantic.BaseModel):
+class PaymentRule(pydantic.BaseModel):
     payment_method_id: int
     foundation_id: int
     amount: Decimal
 
 
-class DbPayment(Payment):
+class DbPaymentRule(PaymentRule):
     id: int
 
 
-@app.get("/payments")
-def get_payments() -> List[DbPayment]:
-    return [DbPayment(id=1, payment_method_id=1, foundation_id=1, amount=1)]
+@app.get("/payment_rules")
+def get_payment_rules() -> List[DbPaymentRule]:
+    return [DbPaymentRule(id=1, payment_method_id=1, foundation_id=1, amount=1)]
+
+
+@app.post("/payment_rules")
+def create_payment_rule(payment_rule: PaymentRule) -> DbPaymentRule:
+    return DbPaymentRule(id=1, **payment_rule.dict())
+
+
+@app.get("/payment_rules/{payment_rule_id}")
+def get_payment_rule(payment_rule_id: int) -> DbPaymentRule:
+    return DbPaymentRule(
+        id=payment_rule_id, payment_method_id=1, foundation_id=1, amount=1
+    )
+
+
+@app.delete("/payment_rules/{payment_rule_id}")
+def delete_payment_rule(payment_rule_id: int):
+    _tmp = payment_rule_id
+    pass
 
 
 @app.post("/user/login")
