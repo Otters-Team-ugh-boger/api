@@ -63,7 +63,7 @@ class PaymentRule(Base):
     payment_history = relationship("PaymentHistory", back_populates="payment_rule")
 
 
-class PaymentHistory(Base):
+class Payment(Base):
     __tablename__ = "payment_history"
 
     id = Column(Integer, primary_key=True, index=True)

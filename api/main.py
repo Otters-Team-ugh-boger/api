@@ -1,57 +1,57 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException
-from fastapi.security import (
-    APIKeyHeader,
-)
+from fastapi.security import  APIKeyHeader
 from sqlalchemy.orm import Session
 from starlette.status import HTTP_401_UNAUTHORIZED
 
-from api import crud, models, schemas
+from api import crud, models, schema
 from api.database import SessionLocal, engine
 from api.security import verify_password
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
-security_scheme = APIKeyHeader(name='Authorization')
+security_scheme = APIKeyHeader(tokenUrl="/user/token")
 
 
 def get_db():
+    db = None
     try:
         db = SessionLocal()
         yield db
     finally:
-        db.close()
+        if db is not None:
+            db.close()
 
 
 async def get_current_user(
-    token: str = Depends(security_scheme), db: Session = Depends(get_db)
-) -> schemas.ResponseUser:
+        token: str = Depends(security_scheme), db: Session = Depends(get_db)
+) -> schema.ResponseUser:
     return crud.get_user_by_token(db, token)
 
 
-def authenticate_user(db, username: str, password: str):
+def authenticate_user(db, username: str, password: str) -> Optional[models.User]:
     user = crud.get_user_by_name(db, username)
     if not user:
-        return False
+        return None
     if not verify_password(password, user.hashed_password):
-        return False
+        return None
     return user
 
 
 @app.post("/user/signup")
 def create_user(
-    user: schemas.RequestUser, db: Session = Depends(get_db)
-) -> schemas.ResponseUser:
+        user: schema.RequestUser, db: Session = Depends(get_db)
+) -> schema.ResponseUser:
     db_user = crud.create_user(db, user)
     return db_user
 
 
 @app.post("/user/token")
-def create_user_token(user: schemas.RequestUser, db: Session = Depends(get_db)) -> str:
+def create_user_token(user: schema.RequestUser, db: Session = Depends(get_db)) -> str:
     db_user = authenticate_user(db, user.name, user.password)
-    if not db_user:
+    if db_user is None:
         raise HTTPException(
             status_code=HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
@@ -61,79 +61,90 @@ def create_user_token(user: schemas.RequestUser, db: Session = Depends(get_db)) 
     return token
 
 
+@app.post("/user/token")
+def create_user_token(user: schema.RequestUser) -> str:
+    _tmp = user
+    return "__PLACEHOLDER_TOKEN"
+
+
 # USER LOGOUT HANDLE
 
 
 @app.get("/payments/methods")
 def get_payment_methods(
-    user: schemas.ResponseUser = Depends(get_current_user),
-) -> List[schemas.ResponsePaymentMethod]:
-    return [
-        schemas.ResponsePaymentMethod(
-            id=1,
-            user_id=user.id,
-            type=schemas.PaymentMethodType.ETH,
-            private_key="PRIVATE_KEY_PLACEHOLDER",
-        )
-    ]
+        db: Session = Depends(get_db),
+        user: schema.ResponseUser = Depends(get_current_user),
+) -> List[schema.ResponsePaymentMethod]:
+    return crud.get_payment_methods(db, user.id)
 
 
 @app.post("/payments/methods")
 def create_payment_method(
-    payment_method: schemas.RequestPaymentMethod,
-    user: schemas.ResponseUser = Depends(get_current_user),
-) -> schemas.ResponsePaymentMethod:
-    return schemas.ResponsePaymentMethod(
-        id=1,
-        user_id=user.id,
-        type=schemas.PaymentMethodType.ETH,
-        private_key="PRIVATE_KEY_PLACEHOLDER",
+        payment_method: schema.RequestPaymentMethod,
+        db: Session = Depends(get_db),
+        user: schema.ResponseUser = Depends(get_current_user),
+) -> schema.ResponsePaymentMethod:
+    return schema.ResponsePaymentMethod.from_orm(
+        crud.create_payment_method(db, user.id, payment_method)
     )
 
 
 @app.get("/payments/methods/{payment_method_id}")
 def get_payment_method(
-    payment_method_id: int, user: schemas.ResponseUser = Depends(get_current_user)
-) -> schemas.ResponsePaymentMethod:
-    return schemas.ResponsePaymentMethod(
-        id=payment_method_id,
-        user_id=user.id,
-        type=schemas.PaymentMethodType.ETH,
-        private_key="PRIVATE_KEY_PLACEHOLDER",
+        payment_method_id: int,
+        db: Session = Depends(get_db),
+        user: schema.ResponseUser = Depends(get_current_user),
+) -> schema.ResponsePaymentMethod:
+    return schema.ResponsePaymentMethod.from_orm(
+        crud.get_payment_method(db, payment_method_id)
     )
 
 
 @app.delete("/payments/methods/{payment_method_id}")
 def delete_payment_method(
-    payment_method_id: int, user: schemas.ResponseUser = Depends(get_current_user)
+        payment_method_id: int,
+        db: Session = Depends(get_db),
+        user: schema.ResponseUser = Depends(get_current_user),
 ) -> None:
-    _tmp = payment_method_id, user
+    crud.delete_payment_method(db, payment_method_id)
 
 
 @app.get("/payments/rules")
-def get_payment_rules() -> List[schemas.ResponsePaymentRule]:
-    return [
-        schemas.ResponsePaymentRule(
-            id=1, payment_method_id=1, foundation_id=1, amount=1
-        )
-    ]
+def get_payment_rules(
+        db: Session = Depends(get_db), user: schema.ResponseUser = Depends(get_current_user)
+) -> List[schema.ResponsePaymentRule]:
+    return crud.get_payment_rules(db, user.id)
 
 
 @app.post("/payments/rules")
 def create_payment_rule(
-    payment_rule: schemas.RequestPaymentRule
-) -> schemas.ResponsePaymentRule:
-    return schemas.ResponsePaymentRule(id=1, **payment_rule.dict())
+        payment_rule: schema.RequestPaymentRule, db: Session = Depends(get_db)
+) -> schema.ResponsePaymentRule:
+    return crud.create_payment_rule(db, payment_rule)
 
 
 @app.get("/payments/rules/{payment_rule_id}")
-def get_payment_rule(payment_rule_id: int) -> schemas.ResponsePaymentRule:
-    return schemas.ResponsePaymentRule(
-        id=payment_rule_id, payment_method_id=1, foundation_id=1, amount=1
-    )
+def get_payment_rule(
+        payment_rule_id: int, db: Session = Depends(get_db)
+) -> schema.ResponsePaymentRule:
+    return crud.get_payment_rule(db, payment_rule_id)
 
 
 @app.delete("/payments/rules/{payment_rule_id}")
-def delete_payment_rule(payment_rule_id: int):
-    _tmp = payment_rule_id
-    pass
+def delete_payment_rule(payment_rule_id: int, db: Session = Depends(get_db)):
+    crud.delete_payment_rule(db, payment_rule_id)
+
+
+@app.post("/payments/rules/{payment_rule_id}/trigger")
+def trigger_payment_rule(
+        payment_rule_id: int, db: Session = Depends(get_db)
+) -> schema.ResponsePaymentRule:
+    return crud.create_payment(db, payment_rule_id)
+
+
+@app.get("/payments/history")
+def get_payment_history(
+        db: Session = Depends(get_db),
+        user: schema.ResponseUser = Depends(get_current_user),
+) -> List[schema.ResponsePayment]:
+    return crud.get_payments(db, user.id)
