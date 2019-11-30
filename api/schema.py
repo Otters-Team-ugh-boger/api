@@ -32,12 +32,15 @@ class PaymentMethodType(str, Enum):
     ETH = "ETH"
 
 
-class RequestPaymentMethod(pydantic.BaseModel):
-    private_key: str
+class PaymentMethodBase(pydantic.BaseModel):
     type: PaymentMethodType
 
 
-class ResponsePaymentMethod(RequestPaymentMethod):
+class RequestPaymentMethod(PaymentMethodBase):
+    private_key: str
+
+
+class ResponsePaymentMethod(PaymentMethodBase):
     id: int
 
     class Config:

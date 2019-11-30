@@ -6,54 +6,54 @@ from api import models, schema
 from api.security import create_access_token, hash_password, verify_password
 
 
-def get_user_by_id(db: Session, user_id: int) -> models.User:
-    return db.query(models.User).filter(models.User.id == user_id).first()
-
-
-def get_user_by_name(db: Session, username: str) -> models.User:
-    return db.query(models.User).filter(models.User.name == username).first()
+def get_user_by_name(db: Session, name: str) -> models.User:
+    return db.query(models.User).filter(models.User.name == name).first()
 
 
 def create_user(db: Session, user: schema.RequestUser) -> models.User:
     hashed_password = hash_password(user.password)
-    db_user = models.User(name=user.name, hashed_password=hashed_password)
-    db.add(db_user)
+    user_rcd = models.User(name=user.name, hashed_password=hashed_password)
+    db.add(user_rcd)
     db.commit()
-    db.refresh(db_user)
-    return db_user
+    db.refresh(user_rcd)
+    return user_rcd
 
 
-def get_user_by_token(db: Session, token: str):
-    db_token = (
+def create_user_token(db: Session, user_id: int) -> models.UserToken:
+    token = create_access_token()
+    user_token_rcd = models.UserToken(user_id=user_id, token=token)
+    db.add(user_token_rcd)
+    db.commit()
+    db.refresh(user_token_rcd)
+    return user_token_rcd
+
+
+def get_user_by_token(db: Session, token: str) -> models.User:
+    user_token_rcd = (
         db.query(models.UserToken).filter(models.UserToken.token == token).first()
     )
-    return db_token.user
+    return user_token_rcd.user
 
 
-def create_user_token(db: Session, user_id: int):
-    token = create_access_token()
-    db_token = models.UserToken(user_id=user_id, token=token)
-    db.add(db_token)
-    db.commit()
-    db.refresh(db_token)
-    return db_token
-
-
-def authenticate_user(db, username: str, password: str) -> Optional[models.User]:
-    user = crud.get_user_by_name(db, username)
-    if not user:
+def authenticate_user(db, name: str, password: str) -> Optional[models.User]:
+    user_rcd = get_user_by_name(db, name)
+    if not user_rcd:
         return None
-    if not verify_password(password, user.hashed_password):
+    if not verify_password(password, user_rcd.hashed_password):
         return None
-    return user
+    return user_rcd
 
 
 def get_payment_methods(db: Session, user_id: int) -> List[models.PaymentMethod]:
-    return db.query(models.PaymentMethod).filter(models.User.id == user_id).all()
+    return (
+        db.query(models.PaymentMethod)
+        .filter(models.PaymentMethod.user_id == user_id)
+        .all()
+    )
 
 
 def create_payment_method(
-        db: Session, user_id: int, payment_method: schema.RequestPaymentMethod
+    db: Session, user_id: int, payment_method: schema.RequestPaymentMethod
 ) -> models.PaymentMethod:
     payment_method_rcd = models.PaymentMethod(user_id=user_id, **payment_method.dict())
     db.add(payment_method_rcd)
@@ -65,8 +65,8 @@ def create_payment_method(
 def get_payment_method(db: Session, payment_method_id: int) -> models.PaymentMethod:
     return (
         db.query(models.PaymentMethod)
-            .filter(models.PaymentMethod.id == payment_method_id)
-            .first()
+        .filter(models.PaymentMethod.id == payment_method_id)
+        .first()
     )
 
 
@@ -79,16 +79,14 @@ def delete_payment_method(db: Session, payment_method_id: int) -> bool:
 def get_payment_rules(db: Session, user_id: int) -> List[models.PaymentRule]:
     return (
         db.query(models.PaymentRule)
-            .join(
-            models.PaymentRule.payment_method, models.PaymentMethod.user
-        )
-            .filter(models.User.id == user_id)
-            .all()
+        .join(models.PaymentRule.payment_method, models.PaymentMethod.user)
+        .filter(models.User.id == user_id)
+        .all()
     )
 
 
 def create_payment_rule(
-        db: Session, payment_rule: schema.RequestPaymentRule,
+    db: Session, payment_rule: schema.RequestPaymentRule,
 ) -> models.PaymentRule:
     payment_rule_rcd = models.PaymentRule(**payment_rule.dict())
     db.add(payment_rule_rcd)
@@ -100,8 +98,8 @@ def create_payment_rule(
 def get_payment_rule(db: Session, payment_rule_id: int) -> models.PaymentRule:
     return (
         db.query(models.PaymentRule)
-            .filter(models.PaymentRule.id == payment_rule_id)
-            .first()
+        .filter(models.PaymentRule.id == payment_rule_id)
+        .first()
     )
 
 
@@ -123,7 +121,11 @@ def create_payment(db: Session, payment_rule_id: int) -> models.Payment:
 def get_payments(db: Session, user_id: int) -> List[models.Payment]:
     return (
         db.query(models.Payment)
-            .join(models.Payment.payment_rule, models.PaymentRule.payment_method, models.PaymentMethod.user)
-            .filter(models.User.id == user_id)
-            .all()
+        .join(
+            models.Payment.payment_rule,
+            models.PaymentRule.payment_method,
+            models.PaymentMethod.user,
+        )
+        .filter(models.User.id == user_id)
+        .all()
     )
