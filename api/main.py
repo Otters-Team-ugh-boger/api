@@ -1,7 +1,9 @@
 from typing import List
 
 from fastapi import Depends, FastAPI, HTTPException
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import (
+    APIKeyHeader,
+)
 from sqlalchemy.orm import Session
 from starlette.status import HTTP_401_UNAUTHORIZED
 
@@ -12,7 +14,7 @@ from api.security import verify_password
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/token")
+security_scheme = APIKeyHeader(name='Authorization')
 
 
 def get_db():
@@ -24,7 +26,7 @@ def get_db():
 
 
 async def get_current_user(
-    token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
+    token: str = Depends(security_scheme), db: Session = Depends(get_db)
 ) -> schemas.ResponseUser:
     return crud.get_user_by_token(db, token)
 
