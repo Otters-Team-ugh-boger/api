@@ -6,6 +6,8 @@ authors = ["Ivan Dmitrievsky <dmitrievsky@cindicator.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.7"
+fastapi = "^0.44.0"
+uvicorn = "^0.10.8"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.0"
