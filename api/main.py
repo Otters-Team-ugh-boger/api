@@ -3,10 +3,21 @@ from typing import List
 from fastapi import Depends, FastAPI
 from fastapi.security import OAuth2PasswordBearer
 
-from . import schema
+from api import schema, models
+from api.database import SessionLocal, engine
+
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/token")
+
+
+def get_db():
+    try:
+        db = SessionLocal()
+        yield db
+    finally:
+        db.close()
 
 
 async def get_current_user(token: str = Depends(oauth2_scheme)) -> schema.ResponseUser:
