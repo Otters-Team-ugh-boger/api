@@ -1,20 +1,20 @@
-from typing import List
+from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
 from api import models, schema
-from api.security import hash_password, create_access_token
+from api.security import create_access_token, hash_password, verify_password
 
 
-def get_user_by_id(db: Session, user_id: int):
+def get_user_by_id(db: Session, user_id: int) -> models.User:
     return db.query(models.User).filter(models.User.id == user_id).first()
 
 
-def get_user_by_name(db: Session, username: str):
+def get_user_by_name(db: Session, username: str) -> models.User:
     return db.query(models.User).filter(models.User.name == username).first()
 
 
-def create_user(db: Session, user: schema.RequestUser):
+def create_user(db: Session, user: schema.RequestUser) -> models.User:
     hashed_password = hash_password(user.password)
     db_user = models.User(name=user.name, hashed_password=hashed_password)
     db.add(db_user)
@@ -39,12 +39,21 @@ def create_user_token(db: Session, user_id: int):
     return db_token
 
 
+def authenticate_user(db, username: str, password: str) -> Optional[models.User]:
+    user = crud.get_user_by_name(db, username)
+    if not user:
+        return None
+    if not verify_password(password, user.hashed_password):
+        return None
+    return user
+
+
 def get_payment_methods(db: Session, user_id: int) -> List[models.PaymentMethod]:
     return db.query(models.PaymentMethod).filter(models.User.id == user_id).all()
 
 
 def create_payment_method(
-    db: Session, user_id: int, payment_method: schema.RequestPaymentMethod
+        db: Session, user_id: int, payment_method: schema.RequestPaymentMethod
 ) -> models.PaymentMethod:
     payment_method_rcd = models.PaymentMethod(user_id=user_id, **payment_method.dict())
     db.add(payment_method_rcd)
@@ -56,26 +65,30 @@ def create_payment_method(
 def get_payment_method(db: Session, payment_method_id: int) -> models.PaymentMethod:
     return (
         db.query(models.PaymentMethod)
-        .filter(models.PaymentMethod.id == payment_method_id)
-        .first()
+            .filter(models.PaymentMethod.id == payment_method_id)
+            .first()
     )
 
 
 def delete_payment_method(db: Session, payment_method_id: int) -> bool:
     db.delete(get_payment_method(db, payment_method_id))
+    db.commit()
     return True
 
 
 def get_payment_rules(db: Session, user_id: int) -> List[models.PaymentRule]:
     return (
         db.query(models.PaymentRule)
-        .filter(models.PaymentRule.payment_method.user_id == user_id)
-        .all()
+            .join(
+            models.PaymentRule.payment_method, models.PaymentMethod.user
+        )
+            .filter(models.User.id == user_id)
+            .all()
     )
 
 
 def create_payment_rule(
-    db: Session, payment_rule: schema.RequestPaymentRule,
+        db: Session, payment_rule: schema.RequestPaymentRule,
 ) -> models.PaymentRule:
     payment_rule_rcd = models.PaymentRule(**payment_rule.dict())
     db.add(payment_rule_rcd)
@@ -87,13 +100,15 @@ def create_payment_rule(
 def get_payment_rule(db: Session, payment_rule_id: int) -> models.PaymentRule:
     return (
         db.query(models.PaymentRule)
-        .filter(models.PaymentRule.id == payment_rule_id)
-        .first()
+            .filter(models.PaymentRule.id == payment_rule_id)
+            .first()
     )
 
 
 def delete_payment_rule(db: Session, payment_rule_id: int) -> bool:
-    db.delete(get_payment_rule(db, payment_rule_id))
+    x = get_payment_rule(db, payment_rule_id)
+    db.delete(x)
+    db.commit()
     return True
 
 
@@ -108,6 +123,7 @@ def create_payment(db: Session, payment_rule_id: int) -> models.Payment:
 def get_payments(db: Session, user_id: int) -> List[models.Payment]:
     return (
         db.query(models.Payment)
-        .filter(models.Payment.payment_rule.payment_method.user_id == user_id)
-        .all()
+            .join(models.Payment.payment_rule, models.PaymentRule.payment_method, models.PaymentMethod.user)
+            .filter(models.User.id == user_id)
+            .all()
     )

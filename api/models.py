@@ -60,7 +60,7 @@ class PaymentRule(Base):
 
     payment_method = relationship("PaymentMethod", back_populates="payment_rules")
     foundation = relationship("Foundation", back_populates="payment_rules")
-    payment_history = relationship("PaymentHistory", back_populates="payment_rule")
+    payment_history = relationship("Payment", back_populates="payment_rule")
 
 
 class Payment(Base):
