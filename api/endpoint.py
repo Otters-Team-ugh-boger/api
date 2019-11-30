@@ -5,10 +5,10 @@ from fastapi.security import APIKeyHeader
 from sqlalchemy.orm import Session
 from starlette.status import HTTP_401_UNAUTHORIZED
 
-from api import crud, models, schema
+from api import crud, model, schema
 from api.database import get_db, engine
 
-models.Base.metadata.create_all(bind=engine)
+model.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 security_scheme = APIKeyHeader(name="Authorization")

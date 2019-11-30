@@ -12,4 +12,4 @@ EXPOSE 80
 
 ADD . /opt/project/
 
-CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "$PORT"]
+CMD ["uvicorn", "api.endpoint:app", "--host", "0.0.0.0", "--port", "$PORT"]
