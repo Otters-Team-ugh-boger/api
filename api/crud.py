@@ -4,8 +4,12 @@ from api import models, schemas
 from api.security import hash_password, create_access_token
 
 
-def get_user(db: Session, user_id: int):
+def get_user_by_id(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.id == user_id).first()
+
+
+def get_user_by_name(db: Session, username: str):
+    return db.query(models.User).filter(models.User.name == username).first()
 
 
 def create_user(db: Session, user: schemas.RequestUser):
