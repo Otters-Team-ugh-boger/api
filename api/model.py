@@ -68,6 +68,7 @@ class Payment(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     payment_rule_id = Column(Integer, ForeignKey("payment_rules.id"))
+    transaction_hash = Column(String)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     payment_rule = relationship("PaymentRule", back_populates="payment_history")

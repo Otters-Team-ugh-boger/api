@@ -120,8 +120,12 @@ def delete_payment_rule(db: Session, payment_rule_id: int) -> bool:
     return True
 
 
-def create_payment(db: Session, payment_rule_id: int) -> model.Payment:
-    payment_rcd = model.Payment(payment_rule_id=payment_rule_id)
+def create_payment(
+    db: Session, payment_rule_id: int, transaction_hash: str
+) -> model.Payment:
+    payment_rcd = model.Payment(
+        payment_rule_id=payment_rule_id, transaction_hash=transaction_hash
+    )
     db.add(payment_rcd)
     db.commit()
     db.refresh(payment_rcd)

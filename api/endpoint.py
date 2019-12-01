@@ -112,29 +112,21 @@ def delete_payment_rule(payment_rule_id: int, db: Session = Depends(get_db)):
 
 
 @app.post(
-    "/payments/rules/{payment_rule_id}/trigger",
-    response_model=schema.ResponsePaymentTrigger,
+    "/payments/rules/{payment_rule_id}/trigger", response_model=schema.ResponsePayment,
 )
 def trigger_payment_rule(
     payment_rule_id: int,
     db: Session = Depends(get_db),
     user: schema.ResponseUser = Depends(get_current_user),
 ):
-    db_payment_rule = crud.get_payment_rule(db, payment_rule_id, user.id)
-    db_payment_method = db_payment_rule.payment_method
-    tx_hash = payment.send_eth_from_to_amount(
+    payment_rule_rcd = crud.get_payment_rule(db, payment_rule_id, user.id)
+    transaction_hash = payment.send_eth_from_to_amount(
         client=payment.eth_client,
-        from_privkey=db_payment_method.private_key,
-        to_pubkey=db_payment_rule.foundation.payment_address,
-        amount=db_payment_rule.amount,
+        from_private_key=payment_rule_rcd.payment_method.private_key,
+        to_pubkey=payment_rule_rcd.foundation.payment_address,
+        amount=payment_rule_rcd.amount,
     )
-    db_payment = crud.create_payment(db, payment_rule_id)
-    return {
-        "tx_hash": tx_hash,
-        "id": db_payment.id,
-        "payment_rule_id": db_payment.payment_rule_id,
-        "created_at": db_payment.created_at,
-    }
+    return crud.create_payment(db, payment_rule_id, transaction_hash)
 
 
 @app.get("/payments/history", response_model=List[schema.ResponsePayment])

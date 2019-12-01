@@ -81,11 +81,8 @@ class ResponsePaymentRule(RequestPaymentRule):
 class ResponsePayment(pydantic.BaseModel):
     id: int
     payment_rule_id: int
+    transaction_hash: str
     created_at: dt.datetime
 
     class Config:
         orm_mode = True
-
-
-class ResponsePaymentTrigger(ResponsePayment):
-    tx_hash: str = ""

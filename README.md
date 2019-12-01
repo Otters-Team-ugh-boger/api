@@ -1,6 +1,6 @@
 ### How to install dependencies
 
-`pip isntall poetry` 
+`pip install poetry` 
 
 `poetry install`
 
