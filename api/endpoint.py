@@ -17,7 +17,14 @@ security_scheme = APIKeyHeader(name="Authorization")
 async def get_current_user(
     db: Session = Depends(get_db), token: str = Depends(security_scheme)
 ) -> schema.ResponseUser:
-    return crud.get_user_by_token(db, token)
+    user = crud.get_user_by_token(db, token)
+    if user is None:
+        raise HTTPException(
+            status_code=HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return user
 
 
 @app.post("/user/create", response_model=schema.ResponseUserCreate)

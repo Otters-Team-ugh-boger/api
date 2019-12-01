@@ -28,10 +28,12 @@ def create_user_token(db: Session, user_id: int) -> model.UserToken:
     return user_token_rcd
 
 
-def get_user_by_token(db: Session, token: str) -> model.User:
+def get_user_by_token(db: Session, token: str) -> Optional[model.User]:
     user_token_rcd = (
         db.query(model.UserToken).filter(model.UserToken.token == token).first()
     )
+    if user_token_rcd is None:
+        return None
     return user_token_rcd.user
 
 
