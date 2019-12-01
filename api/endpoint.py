@@ -64,11 +64,16 @@ def create_user_token(
 def get_payment_methods(
     db: Session = Depends(get_db), user: model.User = Depends(get_current_user)
 ) -> List[dict]:
-    return [{
-        'id': payment_method.id,
-        'type': payment_method.type,
-        'address': payment.account_from_private_key(payment.eth_client, payment_method.private_key).address
-    } for payment_method in crud.get_payment_methods(db, user.id)]
+    return [
+        {
+            "id": payment_method.id,
+            "type": payment_method.type,
+            "address": payment.account_from_private_key(
+                payment.eth_client, payment_method.private_key
+            ).address,
+        }
+        for payment_method in crud.get_payment_methods(db, user.id)
+    ]
 
 
 @app.post("/payments/methods", response_model=schema.ResponsePaymentMethod)
@@ -76,8 +81,15 @@ def create_payment_method(
     payment_method: schema.RequestPaymentMethod,
     db: Session = Depends(get_db),
     user: model.User = Depends(get_current_user),
-) -> model.PaymentMethod:
-    return crud.create_payment_method(db, user.id, payment_method)
+) -> dict:
+    db_payment_method = crud.create_payment_method(db, user.id, payment_method)
+    return {
+        "id": db_payment_method.id,
+        "type": db_payment_method.type,
+        "address": payment.account_from_private_key(
+            payment.eth_client, db_payment_method.private_key
+        ).address,
+    }
 
 
 @app.get(
@@ -87,16 +99,24 @@ def get_payment_method(
     payment_method_id: int,
     db: Session = Depends(get_db),
     user: model.User = Depends(get_current_user),
-) -> model.PaymentMethod:
+) -> dict:
     db_payment_method = crud.get_payment_method(db, payment_method_id, user.id)
     if not db_payment_method:
         raise HTTPException(
             status_code=HTTP_404_NOT_FOUND, detail="Payment method not found"
         )
-    return db_payment_method
+    return {
+        "id": db_payment_method.id,
+        "type": db_payment_method.type,
+        "address": payment.account_from_private_key(
+            payment.eth_client, db_payment_method.private_key
+        ).address,
+    }
 
 
-@app.delete("/payments/methods/{payment_method_id}", response_model=schema.ResponseSuccess)
+@app.delete(
+    "/payments/methods/{payment_method_id}", response_model=schema.ResponseSuccess
+)
 def delete_payment_method(
     payment_method_id: int,
     db: Session = Depends(get_db),
@@ -107,9 +127,7 @@ def delete_payment_method(
         raise HTTPException(
             status_code=HTTP_404_NOT_FOUND, detail="Payment method not found"
         )
-    return {
-        'success': success
-    }
+    return {"success": success}
 
 
 @app.get("/payments/rules", response_model=List[schema.ResponsePaymentRule])
@@ -121,20 +139,23 @@ def get_payment_rules(
 
 @app.post("/payments/rules", response_model=schema.ResponsePaymentRule)
 def create_payment_rule(
-    payment_rule: schema.RequestPaymentRule, db: Session = Depends(get_db), user: model.User = Depends(get_current_user)
+    payment_rule: schema.RequestPaymentRule,
+    db: Session = Depends(get_db),
+    user: model.User = Depends(get_current_user),
 ) -> model.PaymentRule:
     return crud.create_payment_rule(db, payment_rule, user.id)
 
 
 @app.get("/payments/rules/{payment_rule_id}", response_model=schema.ResponsePaymentRule)
 def get_payment_rule(
-    payment_rule_id: int, db: Session = Depends(get_db), user: model.User = Depends(get_current_user)
+    payment_rule_id: int,
+    db: Session = Depends(get_db),
+    user: model.User = Depends(get_current_user),
 ) -> model.PaymentRule:
     payment_rule = crud.get_payment_rule(db, payment_rule_id, user.id)
     if not payment_rule:
         raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND,
-            detail='Payment rule not found',
+            status_code=HTTP_404_NOT_FOUND, detail="Payment rule not found"
         )
     return payment_rule
 
@@ -146,9 +167,7 @@ def delete_payment_rule(payment_rule_id: int, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=HTTP_404_NOT_FOUND, detail="Payment method not found"
         )
-    return {
-        'success': success
-    }
+    return {"success": success}
 
 
 @app.post(
