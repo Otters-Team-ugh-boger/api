@@ -1,35 +1,131 @@
+from typing import List, Optional
+
 from sqlalchemy.orm import Session
 
-from api import models, schemas
-from api.security import hash_password, create_access_token
+from api import model, schema
+from api.security import create_access_token, hash_password, verify_password
 
 
-def get_user_by_id(db: Session, user_id: int):
-    return db.query(models.User).filter(models.User.id == user_id).first()
+def get_user_by_name(db: Session, name: str) -> model.User:
+    return db.query(model.User).filter(model.User.name == name).first()
 
 
-def get_user_by_name(db: Session, username: str):
-    return db.query(models.User).filter(models.User.name == username).first()
-
-
-def create_user(db: Session, user: schemas.RequestUser):
+def create_user(db: Session, user: schema.RequestUser) -> model.User:
     hashed_password = hash_password(user.password)
-    db_user = models.User(name=user.name, hashed_password=hashed_password)
-    db.add(db_user)
+    user_rcd = model.User(name=user.name, hashed_password=hashed_password)
+    db.add(user_rcd)
     db.commit()
-    db.refresh(db_user)
-    return db_user
+    db.refresh(user_rcd)
+    return user_rcd
 
 
-def get_user_by_token(db: Session, token: str):
-    db_token = db.query(models.UserToken).filter(models.UserToken.token == token).first()
-    return db_token.user
-
-
-def create_user_token(db: Session, user_id: int):
+def create_user_token(db: Session, user_id: int) -> model.UserToken:
     token = create_access_token()
-    db_token = models.UserToken(user_id=user_id, token=token)
-    db.add(db_token)
+    user_token_rcd = model.UserToken(user_id=user_id, token=token)
+    db.add(user_token_rcd)
     db.commit()
-    db.refresh(db_token)
-    return db_token
+    db.refresh(user_token_rcd)
+    return user_token_rcd
+
+
+def get_user_by_token(db: Session, token: str) -> model.User:
+    user_token_rcd = (
+        db.query(model.UserToken).filter(model.UserToken.token == token).first()
+    )
+    return user_token_rcd.user
+
+
+def authenticate_user(db, name: str, password: str) -> Optional[model.User]:
+    user_rcd = get_user_by_name(db, name)
+    if not user_rcd:
+        return None
+    if not verify_password(password, user_rcd.hashed_password):
+        return None
+    return user_rcd
+
+
+def get_payment_methods(db: Session, user_id: int) -> List[model.PaymentMethod]:
+    return (
+        db.query(model.PaymentMethod)
+        .filter(model.PaymentMethod.user_id == user_id)
+        .all()
+    )
+
+
+def create_payment_method(
+    db: Session, user_id: int, payment_method: schema.RequestPaymentMethod
+) -> model.PaymentMethod:
+    payment_method_rcd = model.PaymentMethod(user_id=user_id, **payment_method.dict())
+    db.add(payment_method_rcd)
+    db.commit()
+    db.refresh(payment_method_rcd)
+    return payment_method_rcd
+
+
+def get_payment_method(db: Session, payment_method_id: int) -> model.PaymentMethod:
+    return (
+        db.query(model.PaymentMethod)
+        .filter(model.PaymentMethod.id == payment_method_id)
+        .first()
+    )
+
+
+def delete_payment_method(db: Session, payment_method_id: int) -> bool:
+    db.delete(get_payment_method(db, payment_method_id))
+    db.commit()
+    return True
+
+
+def get_payment_rules(db: Session, user_id: int) -> List[model.PaymentRule]:
+    return (
+        db.query(model.PaymentRule)
+        .join(model.PaymentRule.payment_method, model.PaymentMethod.user)
+        .filter(model.User.id == user_id)
+        .all()
+    )
+
+
+def create_payment_rule(
+    db: Session, payment_rule: schema.RequestPaymentRule,
+) -> model.PaymentRule:
+    payment_rule_rcd = model.PaymentRule(**payment_rule.dict())
+    db.add(payment_rule_rcd)
+    db.commit()
+    db.refresh(payment_rule_rcd)
+    return payment_rule_rcd
+
+
+def get_payment_rule(db: Session, payment_rule_id: int) -> model.PaymentRule:
+    return (
+        db.query(model.PaymentRule)
+        .filter(model.PaymentRule.id == payment_rule_id)
+        .first()
+    )
+
+
+def delete_payment_rule(db: Session, payment_rule_id: int) -> bool:
+    x = get_payment_rule(db, payment_rule_id)
+    db.delete(x)
+    db.commit()
+    return True
+
+
+def create_payment(db: Session, payment_rule_id: int) -> model.Payment:
+    payment_rcd = model.Payment(payment_rule_id=payment_rule_id)
+    db.add(payment_rcd)
+    db.commit()
+    db.refresh(payment_rcd)
+    return payment_rcd
+
+
+def get_payments(db: Session, user_id: int) -> List[model.Payment]:
+    return (
+        db.query(model.Payment)
+        .join(
+            model.Payment.payment_rule,
+            model.PaymentRule.payment_method,
+            model.PaymentMethod.user,
+        )
+        .filter(model.User.id == user_id)
+        .all()
+    )
