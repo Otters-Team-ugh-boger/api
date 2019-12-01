@@ -15,6 +15,14 @@ def account_from_private_key(client, private_key):
     return client.eth.account.from_key(private_key)
 
 
+def validate_private_key(client, private_key):
+    try:
+        account = account_from_private_key(client, private_key)
+    except (ValueError, TypeError):
+        return False
+    return account
+
+
 def send_eth_from_to_amount(
     client, from_private_key: str, to_pubkey: str, amount: Decimal
 ) -> str:
@@ -30,3 +38,7 @@ def send_eth_from_to_amount(
     signed_tx = sender_account.signTransaction(params)
     tx_hash = client.eth.sendRawTransaction(signed_tx["rawTransaction"])
     return tx_hash.hex()
+
+
+def validate_address(address):
+    return Web3.isAddress(address)

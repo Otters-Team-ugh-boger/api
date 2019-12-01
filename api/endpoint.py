@@ -82,6 +82,11 @@ def create_payment_method(
     db: Session = Depends(get_db),
     user: model.User = Depends(get_current_user),
 ) -> dict:
+    if not payment.validate_private_key(payment.eth_client, payment_method.private_key):
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST,
+            detail=f"Invalid private key for type: {payment_method.type}",
+        )
     db_payment_method = crud.create_payment_method(db, user.id, payment_method)
     return {
         "id": db_payment_method.id,
@@ -161,8 +166,12 @@ def get_payment_rule(
 
 
 @app.delete("/payments/rules/{payment_rule_id}", response_model=schema.ResponseSuccess)
-def delete_payment_rule(payment_rule_id: int, db: Session = Depends(get_db)):
-    success = crud.delete_payment_rule(db, payment_rule_id)
+def delete_payment_rule(
+    payment_rule_id: int,
+    db: Session = Depends(get_db),
+    user: model.User = Depends(get_current_user),
+):
+    success = crud.delete_payment_rule(db, payment_rule_id, user.id)
     if not success:
         raise HTTPException(
             status_code=HTTP_404_NOT_FOUND, detail="Payment method not found"
@@ -204,4 +213,8 @@ def get_foundations(db: Session = Depends(get_db)) -> List[model.Foundation]:
 def create_foundation(
     foundation: schema.RequestFoundation, db: Session = Depends(get_db)
 ) -> model.Foundation:
+    if not payment.validate_address(foundation.payment_address):
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST, detail="Invalid payment address"
+        )
     return crud.create_foundation(db, foundation)

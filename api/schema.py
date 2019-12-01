@@ -1,6 +1,7 @@
 import datetime as dt
 from decimal import Decimal
 from enum import Enum
+from typing import Optional
 
 import pydantic
 
@@ -82,7 +83,7 @@ class ResponsePaymentRule(RequestPaymentRule):
 class ResponsePayment(pydantic.BaseModel):
     id: int
     payment_rule_id: int
-    transaction_hash: str
+    transaction_hash: Optional[str]
     created_at: dt.datetime
 
     class Config:
