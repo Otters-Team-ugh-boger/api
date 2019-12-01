@@ -1,6 +1,6 @@
 import datetime
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, Numeric, String, Text, Boolean
 from sqlalchemy.orm import relationship
 
 from api.database import Base
@@ -22,7 +22,8 @@ class UserToken(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    token = Column(String)
+    is_active = Column(Boolean, default=True)
+    token = Column(String, unique=True, index=True)
 
     user = relationship("User", back_populates="tokens")
 

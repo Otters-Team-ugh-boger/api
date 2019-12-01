@@ -32,11 +32,19 @@ def create_user_token(db: Session, user_id: int) -> model.UserToken:
     return user_token_rcd
 
 
+def deactivate_user_token(db: Session, token: str) -> bool:
+    token = db.query(model.UserToken).filter(model.UserToken.token == token).first()
+    if token:
+        token.is_active = False
+        db.commit()
+    return True
+
+
 def get_user_by_token(db: Session, token: str) -> Optional[model.User]:
     user_token_rcd = (
         db.query(model.UserToken).filter(model.UserToken.token == token).first()
     )
-    if user_token_rcd is None:
+    if user_token_rcd is None or not user_token_rcd.is_active:
         return None
     return user_token_rcd.user
 

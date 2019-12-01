@@ -57,7 +57,9 @@ def create_user_token(
     return crud.create_user_token(db, user_rcd.id)
 
 
-# USER LOGOUT HANDLE
+@app.post("/user/logout", response_model=schema.ResponseSuccess)
+def logout_user(db: Session = Depends(get_db), token: str = Depends(security_scheme)):
+    return {"success": crud.deactivate_user_token(db, token)}
 
 
 @app.get("/payments/methods", response_model=List[schema.ResponsePaymentMethod])
