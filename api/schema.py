@@ -85,4 +85,4 @@ class ResponsePayment(pydantic.BaseModel):
 
 
 class ResponsePaymentTrigger(ResponsePayment):
-    tx_hash: str = ''
+    tx_hash: str = ""
