@@ -15,7 +15,7 @@ security_scheme = APIKeyHeader(name="Authorization")
 
 
 async def get_current_user(
-    db: Session = Depends(get_db), token: str = Depends(security_scheme)
+        db: Session = Depends(get_db), token: str = Depends(security_scheme)
 ) -> schema.ResponseUser:
     return crud.get_user_by_token(db, token)
 
@@ -44,16 +44,16 @@ def create_user_token(user: schema.RequestUser, db: Session = Depends(get_db)) -
 
 @app.get("/payments/methods", response_model=List[schema.ResponsePaymentMethod])
 def get_payment_methods(
-    db: Session = Depends(get_db), user: schema.ResponseUser = Depends(get_current_user)
+        db: Session = Depends(get_db), user: schema.ResponseUser = Depends(get_current_user)
 ) -> List[schema.ResponsePaymentMethod]:
     return crud.get_payment_methods(db, user.id)
 
 
 @app.post("/payments/methods", response_model=schema.ResponsePaymentMethod)
 def create_payment_method(
-    payment_method: schema.RequestPaymentMethod,
-    db: Session = Depends(get_db),
-    user: schema.ResponseUser = Depends(get_current_user),
+        payment_method: schema.RequestPaymentMethod,
+        db: Session = Depends(get_db),
+        user: schema.ResponseUser = Depends(get_current_user),
 ) -> schema.ResponsePaymentMethod:
     return crud.create_payment_method(db, user.id, payment_method)
 
@@ -62,39 +62,39 @@ def create_payment_method(
     "/payments/methods/{payment_method_id}", response_model=schema.ResponsePaymentMethod
 )
 def get_payment_method(
-    payment_method_id: int,
-    db: Session = Depends(get_db),
-    user: schema.ResponseUser = Depends(get_current_user),
+        payment_method_id: int,
+        db: Session = Depends(get_db),
+        user: schema.ResponseUser = Depends(get_current_user),
 ) -> schema.ResponsePaymentMethod:
     return crud.get_payment_method(db, payment_method_id)
 
 
 @app.delete("/payments/methods/{payment_method_id}")
 def delete_payment_method(
-    payment_method_id: int,
-    db: Session = Depends(get_db),
-    user: schema.ResponseUser = Depends(get_current_user),
+        payment_method_id: int,
+        db: Session = Depends(get_db),
+        user: schema.ResponseUser = Depends(get_current_user),
 ):
     crud.delete_payment_method(db, payment_method_id)
 
 
 @app.get("/payments/rules", response_model=List[schema.ResponsePaymentRule])
 def get_payment_rules(
-    db: Session = Depends(get_db), user: schema.ResponseUser = Depends(get_current_user)
+        db: Session = Depends(get_db), user: schema.ResponseUser = Depends(get_current_user)
 ) -> List[schema.ResponsePaymentRule]:
     return crud.get_payment_rules(db, user.id)
 
 
 @app.post("/payments/rules", response_model=schema.ResponsePaymentRule)
 def create_payment_rule(
-    payment_rule: schema.RequestPaymentRule, db: Session = Depends(get_db)
+        payment_rule: schema.RequestPaymentRule, db: Session = Depends(get_db)
 ) -> schema.ResponsePaymentRule:
     return crud.create_payment_rule(db, payment_rule)
 
 
 @app.get("/payments/rules/{payment_rule_id}", response_model=schema.ResponsePaymentRule)
 def get_payment_rule(
-    payment_rule_id: int, db: Session = Depends(get_db)
+        payment_rule_id: int, db: Session = Depends(get_db)
 ) -> schema.ResponsePaymentRule:
     return crud.get_payment_rule(db, payment_rule_id)
 
@@ -109,9 +109,9 @@ def delete_payment_rule(payment_rule_id: int, db: Session = Depends(get_db)):
     response_model=schema.ResponsePaymentTrigger,
 )
 def trigger_payment_rule(
-    payment_rule_id: int,
-    db: Session = Depends(get_db),
-    user: schema.ResponseUser = Depends(get_current_user),
+        payment_rule_id: int,
+        db: Session = Depends(get_db),
+        user: schema.ResponseUser = Depends(get_current_user),
 ):
     db_payment_rule = crud.get_payment_rule(db, payment_rule_id, user.id)
     db_payment_method = db_payment_rule.payment_method
@@ -132,6 +132,13 @@ def trigger_payment_rule(
 
 @app.get("/payments/history", response_model=List[schema.ResponsePayment])
 def get_payment_history(
-    db: Session = Depends(get_db), user: schema.ResponseUser = Depends(get_current_user)
+        db: Session = Depends(get_db), user: schema.ResponseUser = Depends(get_current_user)
 ) -> List[schema.ResponsePayment]:
     return crud.get_payments(db, user.id)
+
+
+@app.get("/foundations", response_model=List[schema.ResponseFoundation])
+def get_foundations(
+        db: Session = Depends(get_db)
+) -> List[schema.ResponseFoundation]:
+    return crud.get_foundations(db)
