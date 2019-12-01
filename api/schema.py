@@ -20,6 +20,11 @@ class ResponseUser(UserBase):
         orm_mode = True
 
 
+class ResponseUserCreate(UserBase):
+    id: int
+    token: str
+
+
 class UserToken(pydantic.BaseModel):
     user_id: int
     token: str
@@ -77,3 +82,7 @@ class ResponsePayment(pydantic.BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class ResponsePaymentTrigger(ResponsePayment):
+    tx_hash: str = ''

@@ -55,7 +55,7 @@ def get_payment_methods(db: Session, user_id: int) -> List[model.PaymentMethod]:
 def create_payment_method(
     db: Session, user_id: int, payment_method: schema.RequestPaymentMethod
 ) -> model.PaymentMethod:
-    payment_method_rcd = model.PaymentMethod(user_id=user_id, **payment_method.dict())
+    payment_method_rcd = model.PaymentMethod(user_id=user_id, private_key=payment_method.private_key, type=payment_method.type)
     db.add(payment_method_rcd)
     db.commit()
     db.refresh(payment_method_rcd)
@@ -95,10 +95,15 @@ def create_payment_rule(
     return payment_rule_rcd
 
 
-def get_payment_rule(db: Session, payment_rule_id: int) -> model.PaymentRule:
+def get_payment_rule(db: Session, payment_rule_id: int, user_id: int) -> model.PaymentRule:
     return (
         db.query(model.PaymentRule)
+        .join(
+            model.PaymentRule.payment_method,
+            model.PaymentMethod.user,
+        )
         .filter(model.PaymentRule.id == payment_rule_id)
+        .filter(model.User.id == user_id)
         .first()
     )
 
