@@ -2,6 +2,7 @@ import datetime
 
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, Numeric, String, Text, Boolean
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import expression
 
 from api.database import Base
 
@@ -22,7 +23,7 @@ class UserToken(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    is_active = Column(Boolean, default=True)
+    is_active = Column(Boolean, server_default=expression.true(), default=True)
     token = Column(String, unique=True, index=True)
 
     user = relationship("User", back_populates="tokens")
