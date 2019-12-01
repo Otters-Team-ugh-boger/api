@@ -1,6 +1,7 @@
 import os
 
 from decimal import Decimal
+from typing import Union
 
 from web3 import Web3
 
@@ -24,7 +25,7 @@ def validate_private_key(client, private_key):
 
 
 def send_eth_from_to_amount(
-    client, from_private_key: str, to_pubkey: str, amount: Decimal
+    client, from_private_key: str, to_pubkey: str, amount: Union[Decimal, float, str, int]
 ) -> str:
     sender_account = account_from_private_key(client, from_private_key)
     params = {
