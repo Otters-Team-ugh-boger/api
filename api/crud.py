@@ -146,7 +146,7 @@ def get_foundations(db: Session) -> List[model.Foundation]:
 def create_foundation(
     db: Session, foundation: schema.RequestFoundation
 ) -> model.Foundation:
-    foundation_rcd = model.PaymentRule(**foundation.dict())
+    foundation_rcd = model.Foundation(**foundation.dict())
     db.add(foundation_rcd)
     db.commit()
     db.refresh(foundation_rcd)

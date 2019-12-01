@@ -61,6 +61,9 @@ class RequestFoundation(pydantic.BaseModel):
 class ResponseFoundation(RequestFoundation):
     id: int
 
+    class Config:
+        orm_mode = True
+
 
 class RequestPaymentRule(pydantic.BaseModel):
     payment_method_id: int
