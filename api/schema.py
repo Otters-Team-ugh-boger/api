@@ -47,6 +47,7 @@ class RequestPaymentMethod(PaymentMethodBase):
 
 class ResponsePaymentMethod(PaymentMethodBase):
     id: int
+    address: str
 
     class Config:
         orm_mode = True
@@ -86,3 +87,7 @@ class ResponsePayment(pydantic.BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class ResponseSuccess(pydantic.BaseModel):
+    success: bool
